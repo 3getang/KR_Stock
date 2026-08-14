@@ -2,6 +2,10 @@
 GitHub Actions에서 주기적으로(5분마다) 실행되는 스크립트.
 Yahoo Finance에서 국내 종목 시세를 가져와 Firebase Realtime Database에 저장한다.
 공유 웹사이트(kr_stocks_live.html)는 이 Firebase 데이터를 실시간으로 읽어서 보여준다.
+
+GitHub Actions의 스케줄은 최소 5분 간격까지만 지원하므로, 한 번 실행될 때
+내부적으로 60초 간격으로 5번(=약 5분) 반복 조회해서 실질적으로 1분 간격
+갱신 효과를 낸다.
 """
 
 import time
@@ -89,7 +93,7 @@ def fetch_stock(ticker: str, name: str):
     }
 
 
-def main():
+def update_once():
     stocks_data = {}
     for s in STOCKS:
         try:
@@ -110,5 +114,17 @@ def main():
     print("Firebase 저장 완료:", r.status_code)
 
 
+def main():
+    ITERATIONS = 5
+    INTERVAL_SEC = 60
+
+    for i in range(ITERATIONS):
+        print(f"--- {i + 1}/{ITERATIONS}회차 ---")
+        update_once()
+        if i < ITERATIONS - 1:
+            time.sleep(INTERVAL_SEC)
+
+
 if __name__ == "__main__":
     main()
+    
